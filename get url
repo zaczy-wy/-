@@ -1,0 +1,56 @@
+import requests
+from bs4 import BeautifulSoup
+import datetime
+import time
+url_base = 'https://bbs.pku.edu.cn/v2/'
+def parse_html(html):
+    listurl=[]
+    while True:
+        # 下一页的前缀
+        next_base_url = 'https://bbs.pku.edu.cn/v2/thread.php'
+        soup = BeautifulSoup(html.content, 'html.parser')
+
+        # 获取页面 帖子列表
+        items = soup.find_all(class_='list-item-topic list-item')
+        # 遍历列表
+        for item in items:
+            # 逐个分析 获取想要的数据
+            a = item.find(class_='link').get('href')
+            url = url_base+a
+            f=open('D:/学习相关/爬虫/帖子url数据.txt', 'r')
+            listurl=f.readlines()
+            f.close()
+            f=open('D:/学习相关/爬虫/帖子url数据.txt', 'a+')
+            if url+'\n' in listurl:
+                continue
+            else:
+                f.write(url+'\n')
+            f.close()
+        previous_class = ' '.join(soup.find('div', class_='paging-input-wrapper').find_previous_sibling().attrs['class'])
+
+        if previous_class=='paging-button n active':
+            break
+
+        # 下一页
+        next_url =next_base_url+soup.find('div',class_='paging-input-wrapper').find_previous_sibling(class_='paging-button n').find(class_='link').get('href')
+        return next_url
+    return None
+def timer():
+    while True:
+        now=datetime.datetime.now()
+        if now.hour == 1 and now.minute == 0:
+            return 1
+        else:
+            return 0
+def main():
+    url = 'https://bbs.pku.edu.cn/v2/thread.php?bid=165&mode=topic&page=1'
+    while True:
+        html=requests.get(url)
+        print("已经爬取页面："+url)
+        url=parse_html(html)
+        if url is None:
+            break
+if __name__ == '__main__':
+    if timer()==1:
+        main()
+    time.sleep(3600)
